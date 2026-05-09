@@ -4,7 +4,7 @@
 #include <functional>
 
 #ifdef ARDUINO_ARCH_ESP32
-#include "HTTPClient.h" // not available on Linux/Portduino
+// esp_http_client.h is IDF-native and available on all ESP32 targets
 
 class URLService : public ITileService
 {
@@ -13,10 +13,10 @@ class URLService : public ITileService
 
     URLService(Callback cb = nullptr);
     bool load(const char *name, void *img) override;
+    bool loadImpl(const char *name, void *img);
     virtual ~URLService();
 
   private:
-    HTTPClient http;
     Callback saveCB = nullptr;
 };
 

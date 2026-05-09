@@ -354,8 +354,12 @@ void TFTView_320x240::init_screens(void)
 {
     ILOG_DEBUG("init screens...");
     state = MeshtasticView::eInitScreens;
+    ILOG_DEBUG("calling ui_init...");
     ui_init();
+    ILOG_DEBUG("ui_init done (heap=%u psram=%u), calling apply_hotfix...",
+               (unsigned)ESP.getFreeHeap(), (unsigned)ESP.getFreePsram());
     apply_hotfix();
+    ILOG_DEBUG("apply_hotfix done");
 
     activeMsgContainer = objects.messages_container;
     // setup the two channel label panels with arrays that allow indexing
@@ -366,11 +370,15 @@ void TFTView_320x240::init_screens(void)
                 objects.settings_channel6_label, objects.settings_channel7_label};
 
     channelGroup = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
+    ILOG_DEBUG("calling ui_set_active...");
     ui_set_active(objects.home_button, objects.home_panel, objects.top_panel);
+    ILOG_DEBUG("calling ui_events_init...");
     ui_events_init();
+    ILOG_DEBUG("ui_events_init done, loading main_screen...");
 
     // load main screen
     lv_screen_load_anim(objects.main_screen, LV_SCR_LOAD_ANIM_NONE, 300, 0, false);
+    ILOG_DEBUG("main_screen load requested");
 
     // re-configuration based on capabilities
     if (!displaydriver->hasLight())
@@ -445,6 +453,7 @@ void TFTView_320x240::init_screens(void)
     screensInitialised = true;
     state = MeshtasticView::eInitDone;
     ILOG_DEBUG("TFTView_320x240 init done.");
+
 }
 
 /**
@@ -762,6 +771,7 @@ void TFTView_320x240::ui_events_init(void)
     lv_obj_add_event_cb(objects.keyboard_button_9, ui_event_KeyboardButton, LV_EVENT_CLICKED, (void *)9);
     lv_obj_add_event_cb(objects.keyboard_button_10, ui_event_KeyboardButton, LV_EVENT_CLICKED, (void *)10);
     lv_obj_add_event_cb(objects.keyboard_button_11, ui_event_KeyboardButton, LV_EVENT_CLICKED, (void *)11);
+    ILOG_DEBUG("ui_events_init A: kb done");
 
     // message text area
     lv_obj_add_event_cb(objects.message_input_area, ui_event_message_ready, LV_EVENT_ALL, NULL);
@@ -784,6 +794,7 @@ void TFTView_320x240::ui_events_init(void)
     lv_obj_add_event_cb(objects.basic_settings_backup_restore_button, ui_event_backup_button, LV_EVENT_CLICKED, NULL);
     lv_obj_add_event_cb(objects.basic_settings_reset_button, ui_event_reset_button, LV_EVENT_CLICKED, NULL);
     lv_obj_add_event_cb(objects.basic_settings_reboot_button, ui_event_reboot_button, LV_EVENT_CLICKED, NULL);
+    ILOG_DEBUG("ui_events_init B: basic_settings done");
 
     lv_obj_add_event_cb(objects.reboot_button, ui_event_device_reboot_button, LV_EVENT_CLICKED, NULL);
     lv_obj_add_event_cb(objects.progmode_button, ui_event_device_progmode_button, LV_EVENT_ALL, NULL);
@@ -812,6 +823,7 @@ void TFTView_320x240::ui_events_init(void)
     lv_obj_add_event_cb(objects.obj6__cancel_button_w, ui_event_cancel, LV_EVENT_CLICKED, 0);
     lv_obj_add_event_cb(objects.obj7__ok_button_w, ui_event_ok, LV_EVENT_CLICKED, 0);
     lv_obj_add_event_cb(objects.obj7__cancel_button_w, ui_event_cancel, LV_EVENT_CLICKED, 0);
+    ILOG_DEBUG("ui_events_init C: obj7 done, obj8ok=%p obj8cancel=%p", objects.obj8__ok_button_w, objects.obj8__cancel_button_w);
     lv_obj_add_event_cb(objects.obj8__ok_button_w, ui_event_ok, LV_EVENT_CLICKED, 0);
     lv_obj_add_event_cb(objects.obj8__cancel_button_w, ui_event_cancel, LV_EVENT_CLICKED, 0);
     lv_obj_add_event_cb(objects.obj9__ok_button_w, ui_event_ok, LV_EVENT_CLICKED, 0);
@@ -838,6 +850,7 @@ void TFTView_320x240::ui_events_init(void)
     lv_obj_add_event_cb(objects.obj21__cancel_button_w, ui_event_cancel, LV_EVENT_CLICKED, 0);
     lv_obj_add_event_cb(objects.obj27__ok_button_w, ui_event_ok, LV_EVENT_CLICKED, 0);
     lv_obj_add_event_cb(objects.obj27__cancel_button_w, ui_event_cancel, LV_EVENT_CLICKED, 0);
+    ILOG_DEBUG("ui_events_init D: obj_ok_cancel done");
 
     // modify channel buttons
     lv_obj_add_event_cb(objects.settings_channel0_button, ui_event_modify_channel, LV_EVENT_ALL, (void *)0);
@@ -1147,7 +1160,7 @@ void TFTView_320x240::ui_event_MapButton(lv_event_t *e)
             static bool toggle = true;
             toggle = !toggle;
             if (toggle) {
-                // lv_obj_clear_flag(objects.zoom_slider, LV_OBJ_FLAG_HIDDEN);
+                lv_obj_clear_flag(objects.zoom_slider, LV_OBJ_FLAG_HIDDEN);
                 lv_obj_clear_flag(objects.gps_lock_button, LV_OBJ_FLAG_HIDDEN);
                 lv_obj_clear_flag(objects.zoom_in_button, LV_OBJ_FLAG_HIDDEN);
                 lv_obj_clear_flag(objects.zoom_out_button, LV_OBJ_FLAG_HIDDEN);
@@ -1162,6 +1175,11 @@ void TFTView_320x240::ui_event_MapButton(lv_event_t *e)
         } else {
             THIS->ui_set_active(objects.map_button, objects.map_panel, objects.top_map_panel);
             THIS->loadMap();
+            lv_obj_clear_flag(objects.zoom_slider, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_clear_flag(objects.gps_lock_button, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_clear_flag(objects.zoom_in_button, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_clear_flag(objects.zoom_out_button, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_clear_flag(objects.navigation_panel, LV_OBJ_FLAG_HIDDEN);
             lv_group_focus_obj(objects.nav_button);
         }
         lv_obj_add_flag(objects.map_osd_panel, LV_OBJ_FLAG_HIDDEN);
@@ -2525,10 +2543,14 @@ void TFTView_320x240::loadMap(void)
         map->setBackupService(
             new URLService([tileService](const char *name, void *img, size_t len) { return tileService->save(name, img, len); }));
 #elif defined(HAS_SDCARD)
-        auto tileService = new SdFatService();
-        map = new MapPanel(objects.raw_map_panel, tileService);
-        map->setBackupService(
-            new URLService([tileService](const char *name, void *img, size_t len) { return tileService->save(name, img, len); }));
+        if (cardDetected) {
+            auto tileService = new SdFatService();
+            map = new MapPanel(objects.raw_map_panel, tileService);
+            map->setBackupService(
+                new URLService([tileService](const char *name, void *img, size_t len) { return tileService->save(name, img, len); }));
+        } else {
+            map = new MapPanel(objects.raw_map_panel, new URLService());
+        }
 #elif defined(ARCH_PORTDUINO)
         map = new MapPanel(objects.raw_map_panel, new SDCardService()); // TODO: LinuxFileSystemService
 #else
@@ -2673,6 +2695,9 @@ void TFTView_320x240::loadMap(void)
         }
     } else {
         lv_dropdown_set_options(objects.map_style_dropdown, "");
+        lv_dropdown_set_options(objects.map_url_dropdown, TileProvider::providers().c_str());
+        lv_dropdown_set_selected(objects.map_url_dropdown, TileProvider::selectedTemplate());
+        MapTileSettings::setSaveOK(false);
     }
 
     lv_obj_clear_flag(objects.map_panel, LV_OBJ_FLAG_HIDDEN);
@@ -3800,6 +3825,7 @@ void TFTView_320x240::clearChatHistory(void)
     }
     chats.clear();
     messages.clear();
+    activeMsgContainer = objects.messages_container;
     updateActiveChats();
     updateNodesFiltered(true);
     controller->removeTextMessages(0, 0, 0);
@@ -4517,8 +4543,10 @@ void TFTView_320x240::addMessage(lv_obj_t *container, uint32_t msgTime, uint32_t
 
     lv_obj_t *textLabel = lv_label_create(hiddenPanel);
     // calculate expected size of text bubble, to make it look nicer
-    lv_coord_t width = lv_txt_get_width(buf, strlen(buf), &ui_font_montserrat_12, 0);
-    lv_obj_set_width(textLabel, std::max<int32_t>(std::min<int32_t>(width, 200) + 10, 40));
+    const int32_t maxBubbleWidth = std::max<int32_t>(80, lv_display_get_horizontal_resolution(displaydriver->getDisplay()) / 2);
+    const int32_t textWidth = lv_txt_get_width(buf, strlen(buf), &ui_font_montserrat_14, 0);
+    const int32_t desiredBubbleWidth = textWidth + 18;
+    lv_obj_set_width(textLabel, std::max<int32_t>(std::min<int32_t>(desiredBubbleWidth, maxBubbleWidth), 40));
     lv_obj_set_height(textLabel, LV_SIZE_CONTENT);
     lv_obj_set_y(textLabel, 0);
     lv_obj_set_align(textLabel, LV_ALIGN_RIGHT_MID);
@@ -6742,7 +6770,9 @@ void TFTView_320x240::showMessages(uint8_t ch)
         return;
     }
 
-    lv_obj_add_flag(activeMsgContainer, LV_OBJ_FLAG_HIDDEN);
+    if (activeMsgContainer) {
+        lv_obj_add_flag(activeMsgContainer, LV_OBJ_FLAG_HIDDEN);
+    }
     activeMsgContainer = channelGroup[ch];
     if (!activeMsgContainer) {
         activeMsgContainer = newMessageContainer(0, UINT32_MAX, ch);
@@ -6761,7 +6791,9 @@ void TFTView_320x240::showMessages(uint8_t ch)
  */
 void TFTView_320x240::showMessages(uint32_t nodeNum)
 {
-    lv_obj_add_flag(activeMsgContainer, LV_OBJ_FLAG_HIDDEN);
+    if (activeMsgContainer) {
+        lv_obj_add_flag(activeMsgContainer, LV_OBJ_FLAG_HIDDEN);
+    }
     activeMsgContainer = messages[nodeNum];
     if (!activeMsgContainer) {
         activeMsgContainer = newMessageContainer(nodeNum, 0, 0);
